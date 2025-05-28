@@ -129,3 +129,25 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Initialize model once (so you don't load every request)
+tokenizer, model, device = load_model()
+
+def summarize_text(text: str) -> str:
+    # Run extractive summary (TextRank-like)
+    extractive = textrank_like_summary(text)
+    # Run abstractive summary (Flan-T5)
+    final_summary = flan_t5_summarize(extractive, tokenizer, model, device)
+    
+    # Filter out unwanted sentences (similar to main)
+    unwanted_sentence = "If you're looking for a place to stay in San Diego, look no further than Expedia.com."
+    irrelevant_patterns = [
+        r"it's been a while",
+        r"i thought i would give it a try",
+        r"if you're looking for a place to stay",
+        r"thank you for having me"
+    ]
+    if final_summary.strip() == unwanted_sentence or any(re.search(pat, final_summary.lower()) for pat in irrelevant_patterns):
+        return "Summary not available due to irrelevant content."
+    
+    return final_summary.strip()
